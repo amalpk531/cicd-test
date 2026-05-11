@@ -24,7 +24,7 @@ jobs:
       - name: Login to Harbor
         run: |
           echo "${{ secrets.HARBOR_PASSWORD }}" | docker login ${{ secrets.HARBOR_URL }} \
-          -u "${{ secrets.HARBOR_USERNAME }}" \
+          -u 'robot$github' \
           --password-stdin
 
       - name: Build Docker Image
@@ -50,7 +50,7 @@ jobs:
             sudo systemctl restart docker
 
             echo "${{ secrets.HARBOR_PASSWORD }}" | docker login ${{ secrets.HARBOR_URL }} \
-            -u "${{ secrets.HARBOR_USERNAME }}" \
+            -u 'robot$github' \
             --password-stdin
 
             docker pull ${{ secrets.HARBOR_URL }}/test-lab/mysite:latest

@@ -44,16 +44,16 @@ jobs:
           script: |
 
             echo '{
-              "insecure-registries" : ["'${{ secrets.HARBOR_URL }}'"]
+              "insecure-registries" : ["localhost"]
             }' | sudo tee /etc/docker/daemon.json
 
             sudo systemctl restart docker
 
-            echo "${{ secrets.HARBOR_PASSWORD }}" | docker login ${{ secrets.HARBOR_URL }} \
+            echo "${{ secrets.HARBOR_PASSWORD }}" | docker login localhost \
             -u 'robot$github' \
             --password-stdin
 
-            docker pull ${{ secrets.HARBOR_URL }}/test-lab/mysite:latest
+            docker pull localhost/test-lab/mysite:latest
 
             docker stop mysite || true
             docker rm mysite || true
@@ -61,4 +61,4 @@ jobs:
             docker run -d \
               --name mysite \
               -p 80:80 \
-              ${{ secrets.HARBOR_URL }}/test-lab/mysite:latest
+              localhost/test-lab/mysite:latest

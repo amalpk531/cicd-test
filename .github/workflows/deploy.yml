@@ -1,0 +1,49 @@
+name: Deploy Static Site
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker Login
+        run: |
+          docker login http://${{ secrets.HARBOR_URL }} \
+          -u "${{ secrets.HARBOR_USERNAME }}" \
+          -p "${{ secrets.HARBOR_PASSWORD }}"
+
+      - name: Build Image
+        run: |
+          docker build -t ${{ secrets.HARBOR_URL }}/test-lab/mysite:latest .
+
+      - name: Push Image
+        run: |
+          docker push ${{ secrets.HARBOR_URL }}/test-lab/mysite:latest
+
+      - name: Deploy EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker login http://${{ secrets.HARBOR_URL }} \
+            -u "${{ secrets.HARBOR_USERNAME }}" \
+            -p "${{ secrets.HARBOR_PASSWORD }}"
+
+            docker pull ${{ secrets.HARBOR_URL }}/test-lab/mysite:latest
+
+            docker stop mysite || true
+            docker rm mysite || true
+
+            docker run -d \
+              --name mysite \
+              -p 80:80 \
+              ${{ secrets.HARBOR_URL }}/test-lab/mysite:latest

@@ -1,49 +1,34 @@
-name: Deploy Static Site
+script: |
 
-on:
-  push:
-    branches:
-      - main
+  cd /home/ubuntu
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  if [ ! -d "myapp" ]; then
+    git clone https://github.com/amalpk531/cicd-test.git myapp
+  fi
 
-    steps:
-      - name: Deploy on EC2
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+  cd myapp
 
-          script: |
+  git pull origin main
 
-            cd /home/ubuntu
+  echo "${{ secrets.HARBOR_PASSWORD }}" | docker login 172.31.21.99 \
+    -u "${{ secrets.HARBOR_USERNAME }}" \
+    --password-stdin
 
-            if [ ! -d "myapp" ]; then
-              git clone https://github.com/amalpk531/cicd-test.git myapp
-            fi
+  VERSION=$(date +%Y%m%d%H%M%S)
 
-            cd myapp
+  docker build --no-cache \
+    -t 172.31.21.99/test-lab/mysite:$VERSION \
+    -t 172.31.21.99/test-lab/mysite:latest .
 
-            git pull origin main
+  docker push 172.31.21.99/test-lab/mysite:$VERSION
 
-            VERSION=$(date +%Y%m%d%H%M%S)
+  docker push 172.31.21.99/test-lab/mysite:latest
 
-            docker build --no-cache \
-            -t 172.31.21.99/test-lab/mysite:$VERSION \
-            -t 172.31.21.99/test-lab/mysite:latest .
+  docker stop mysite || true
 
-            docker push 172.31.21.99/test-lab/mysite:$VERSION
+  docker rm mysite || true
 
-            docker push 172.31.21.99/test-lab/mysite:latest
-
-            docker stop mysite || true
-
-            docker rm mysite || true
-
-            docker run -d \
-              --name mysite \
-              -p 8080:80 \
-              172.31.21.99/test-lab/mysite:$VERSION
+  docker run -d \
+    --name mysite \
+    -p 8080:80 \
+    172.31.21.99/test-lab/mysite:$VERSION

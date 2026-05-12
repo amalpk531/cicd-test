@@ -21,16 +21,14 @@ jobs:
             cd /home/ubuntu
 
             if [ ! -d "myapp" ]; then
-              git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git myapp
-            else
-              cd myapp
-              git pull origin main
-              cd ..
+              git clone https://github.com/amalpk531/cicd-test.git myapp
             fi
 
             cd myapp
 
-            docker build -t 172.31.21.99/test-lab/mysite:latest .
+            git pull origin main
+
+            docker build --no-cache -t 172.31.21.99/test-lab/mysite:latest .
 
             docker push 172.31.21.99/test-lab/mysite:latest
 
